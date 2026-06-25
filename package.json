@@ -2,7 +2,7 @@
   "name": "account-risk-synthesis",
   "version": "0.1.0",
   "description": "Pattern-as-code diagnosis: match an account-state object against an ordered pattern library and emit a three-beat narrative (headline / recommended action / what it cannot see).",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "commonjs",
   "scripts": {
     "test": "vitest run",

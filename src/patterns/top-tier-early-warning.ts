@@ -20,7 +20,7 @@
 import type { Pattern, SynthesisInput, SynthesisOutput, MatcherContext } from '../types';
 import { STRUCTURAL_SIGNALS } from './recycler-breaking-pattern';
 
-// z-scores are statistically universal (exception #2 in pattern-thresholds.md)
+// z-scores are statistically universal
 const STRUCTURAL_Z_THRESHOLD = 3.0;
 const MIN_STRUCTURAL_ANOMALIES = 2;
 
@@ -88,8 +88,7 @@ export const topTierEarlyWarning: Pattern = {
     if (input.status === 'churned') return false;
 
     // Revenue must exist and clear the tenant-derived top-tier threshold
-    // (p85 of the active-account revenue distribution, per
-    // .claude/rules/pattern-thresholds.md).
+    // (p85 of the active-account revenue distribution).
     if (input.revenue12mo == null) return false;
     if (input.revenue12mo < ctx.revenueTopTier) return false;
 

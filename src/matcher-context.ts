@@ -7,8 +7,6 @@
  * $500K and another whose "top tier" is $5M both get pattern matches grounded
  * in their own distribution rather than a single Acme-Industrial-derived constant.
  *
- * See .claude/rules/pattern-thresholds.md for the broader policy.
- *
  * The caller provides the pg client; no DB credentials are imported here.
  */
 

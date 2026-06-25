@@ -1,87 +1,36 @@
 # account-risk-synthesis
 
-Pattern-as-code account diagnosis. Given a single account-state object (model
-scores, anomaly flags, revenue history, network shape), it matches the account
-against an **ordered pattern library** and emits a three-beat narrative:
+Picture a Tuesday-morning call list with twelve red flags on it. The rep works down the list, dials the third account, and the buyer answers a little puzzled — orders are up, nothing's wrong, the model was reading stale data. That call just cost more trust than the other eleven will earn back. I spent years on the distribution side watching that exact mistake burn rep credibility, so when I built the risk layer for a B2B revenue system, I refused to let a single model score be the thing a rep acts on.
 
-1. **Headline** — a one-line observation of what the account is doing
-   (`diagnosis.label` / `diagnosis.body`).
-2. **Recommended action** — what to do about it, with investigation
-   objectives and channel-agnostic engagement options (`action`).
-3. **What it cannot see** — the blind spots and unknowns the diagnosis is
-   built on top of, so the reader knows what the synthesis is *not* claiming
-   (`blindSpots`, plus the per-layer agreement/disagreement in `evidence` and
-   `confidence`).
+This is the piece that turns raw, sometimes-disagreeing signals — a churn model, a survival model, an anomaly detector — into one readable briefing per account. The signals propose. They never get to be the final word.
 
-The point is that the diagnosis is **code, not a prompt**: each pattern is a
-small, testable TypeScript module with an explicit `matches()` predicate and a
-`synthesize()` function. The library is ordered most-specific-first, the first
-matching pattern wins, and a fallback always matches so every account gets an
-output.
+## The part that matters: the model can be overruled
 
-## What's in the box
+After a risk pattern fires, a meta-check called `model_overcall` looks at the account's own ground-truth revenue: if 2026 YTD is running above ~70% of the pace prior-year revenue would predict for this point in the year, it **replaces** the alarm with an explicit *"the model flagged this, but the data doesn't back it — monitor, don't engage"* diagnosis. Deterministic ground truth gets to veto the prediction. That's the whole stance: the LLM-or-model layer narrates and proposes at the edges; a tested, auditable rule decides what the rep is actually told.
 
-`synthesize(input, ctx)` walks the pattern library in this order:
+Two more invariants enforce it:
 
-| Pattern | What it reads as |
-| --- | --- |
-| `recycler_breaking_pattern` | An account that normally goes quiet and comes back, but this silence looks structurally different from its past recoveries. |
-| `top_tier_early_warning` | A high-revenue account showing structural anomalies before trailing invoiced revenue moves. |
-| `growth_lock_in` | A growing account near its peak — an invest story, not a save story. |
-| `silent_winback` | A quietly fading account that every individual risk layer missed. |
-| `unflagged_stable` | Nothing is wrong; the account is performing normally. |
-| `unclassifiable` | Fallback — always matches so there is always an output. |
+- **Every account produces an output.** The pattern library is ordered most-specific-first, the first match wins, and `unclassifiable` always matches as the floor — there's no silent gap, no account that quietly falls through.
+- **Every briefing says what it can't see.** `blindSpots` is a required field on every output, alongside per-layer evidence agreement/disagreement and a confidence object. The briefing states what it is *not* claiming.
 
-`model_overcall` runs as a meta-check *after* the primary pattern: if the
-account's own ground-truth revenue pace contradicts a risk prediction, the
-output is replaced with a "the model may be wrong here" diagnosis instead.
+## How it's built
 
-Per-tenant thresholds (`MatcherContext`) are computed from the tenant's own
-distribution (e.g. the p85 revenue cutoff) rather than hardcoded absolute
-dollar amounts, so patterns mean the same thing for a small and a large
-customer. `matcher-context.ts` shows the SQL that would produce that context in
-a real deployment; it takes a duck-typed query client and imports no database
-driver.
-
-## Run it
+Each pattern is a TypeScript module with an explicit `matches()` predicate and a `synthesize()` function — diagnosis as code, not a prompt you hope the model honors. Thresholds aren't hardcoded dollars; they're computed from each tenant's own distribution (p85 revenue, p80 gap-cycle, via `percentile_cont`), so a pattern means the same thing for a small customer and a large one. `matcher-context.ts` takes a duck-typed query client and imports no DB driver, which is why there are **zero runtime dependencies**.
 
 ```bash
 npm install
-npm test
+npm test          # 99 tests, 4 files
+npm run typecheck # tsc --noEmit, clean
 ```
 
-No database, no API keys, no network. The only dependencies are dev tools
-(`typescript`, `vitest`); there are **zero runtime dependencies**.
+No database, no API keys, no network. Dev dependencies are only `typescript` and `vitest`.
 
-If your environment blocks `npx`, run the binary directly after install:
+Architecture and the pattern-ordering rationale: [ARCHITECTURE.md](ARCHITECTURE.md). Honest self-audit (what's tested, what isn't, and the synthetic-data posture): [AUDIT.md](AUDIT.md).
 
-```bash
-node_modules/.bin/vitest run
-```
+## Status
 
-**99 tests** across 4 files cover the matcher predicates and the shape of the
-synthesized output for each pattern.
-
-## A note on the data
-
-Every account in the tests is **synthetic** — invented names, IDs, and figures
-chosen to exercise each matcher. They are not derived from any real customer.
-The illustrative recovery rate in `historical-recovery-rates.ts` (and its
-sample size) is a placeholder that demonstrates the loss-math shape; it is
-documented in that file as such and is **not** an empirical measurement. In a
-real deployment those rates would be computed per tenant from that tenant's own
-posted-invoice history.
-
-## Where this came from
-
-This module was extracted from a larger private B2B revenue-intelligence
-system. That system layers a churn model, a survival model, and an anomaly
-detector over a distributor's order history; the synthesis layer here is the
-piece that turns those raw, sometimes-disagreeing signals into a single
-readable briefing per account. The design intent — surface the disagreement and
-the blind spots rather than hiding them behind one score — is a design choice,
-described here as a design choice, not a benchmarked result.
+Public, sanitized version of a real system. Every account in the tests is synthetic — invented IDs and figures chosen to exercise each matcher, not derived from any customer. The illustrative recovery rate in `historical-recovery-rates.ts` (0.592, N=1409) is labeled in code as a synthetic placeholder for the loss-math shape, not an empirical measurement; in a real deployment those rates are computed per tenant.
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).

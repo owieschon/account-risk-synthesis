@@ -42,7 +42,7 @@
 
 import type { Pattern, SynthesisInput, SynthesisOutput, MatcherContext } from '../types';
 
-// Universal probability floors (exception #1 in pattern-thresholds.md).
+// Universal probability floors.
 // "The churn model is not alarmed" and "the survival model says they come
 // back." If either layer IS alarmed, the account belongs to a different
 // pattern (churn_model territory or recycler_breaking_pattern).
@@ -54,7 +54,7 @@ const SURVIVAL_LIKELY_RETURN = 0.5;
 // tenant norm needed. Hero is at 0.39.
 const PEAK_DROP_RATIO = 0.55;
 
-// Industry-invariant trend bar (exception #3 in pattern-thresholds.md).
+// Industry-invariant trend bar.
 // A 20-point trailing-revenue drop is the "clearly declining" bar for the
 // distribution-industry ICP. Distinguishes silent winback from merely-lower-
 // than-peak accounts that have stabilized at a new (lower) level. Revisit
@@ -68,7 +68,7 @@ const DECLINING_TREND_PCT = -20;
 const QUALITATIVE_LOSS_RATE = 0.5;
 
 // Type classification: moment. Silent-winback is the reference moment
-// pattern in .claude/rules/pattern-type-vs-moment.md: most accounts pass
+// pattern: most accounts pass
 // through the pattern for one or a few snapshots on their trajectory from
 // stable to dormant, and the value of the Cue is acting within that window.
 // An account that "lives in" silent-winback for many snapshots is not
@@ -102,8 +102,7 @@ export const silentWinback: Pattern = {
     if (input.isAnomalous) return false;
 
     // Peak-to-current revenue ratio must be clearly below peak. Uses the
-    // account's own history as the baseline (ui-design.md Rule 2 +
-    // pattern-thresholds.md account-relative ratio).
+    // account's own history as the baseline (account-relative ratio).
     if (input.revenue12moCurrent == null) return false;
     if (input.peakRevenue12mo == null || input.peakRevenue12mo <= 0) return false;
     const peakRatio = input.revenue12moCurrent / input.peakRevenue12mo;

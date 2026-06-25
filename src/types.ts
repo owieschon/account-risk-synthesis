@@ -1,6 +1,5 @@
 /**
  * Synthesis layer type definitions.
- * Matches the spec at docs/SYNTHESIS_LAYER_SPEC_v1.md.
  */
 
 // ---------------------------------------------------------------------------
@@ -10,7 +9,7 @@
 /**
  * Tenant-scoped thresholds and derived context, computed once per
  * synthesis batch. Patterns use this instead of hardcoding absolute
- * numeric thresholds. See .claude/rules/pattern-thresholds.md.
+ * numeric thresholds.
  */
 export interface MatcherContext {
   readonly tenantId: string;
@@ -187,7 +186,7 @@ export interface SynthesisEvidence {
 // ---------------------------------------------------------------------------
 
 /**
- * Type classification of a pattern (see .claude/rules/pattern-type-vs-moment.md).
+ * Type classification of a pattern.
  *
  * `type`: a persistent classification. Account enters the pattern's feature-
  *   space region and stays for multiple consecutive snapshots. Matcher fires

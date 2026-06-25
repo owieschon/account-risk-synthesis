@@ -4,8 +4,6 @@
  * Runs the pattern library against the account, selects the best-matching pattern,
  * and produces a SynthesisOutput. The output is stored in account_synthesis and
  * rendered by the UI.
- *
- * See docs/SYNTHESIS_LAYER_SPEC_v1.md for the full design spec.
  */
 
 import type { SynthesisInput, SynthesisOutput, Pattern, MatcherContext, PatternType } from './types';
